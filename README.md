@@ -1,0 +1,2 @@
+# sedziaAI
+Platforma agentowa 
