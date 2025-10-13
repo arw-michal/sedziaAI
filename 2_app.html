@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Asystent AI – Platforma demonstracyjna</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0f1218;
+      --panel: #151a22;
+      --panel-2: #1b2230;
+      --muted: #8a95a7;
+      --text: #e6e9ef;
+      --accent: #6ea8fe;
+      --good: #29cc7a;
+      --bad: #ff5d5d;
+      --border: #2a3446;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; background:var(--bg); color:var(--text); font: 14px/1.35 "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .app{ display:grid; grid-template-columns: 280px 1fr 560px; grid-template-rows: 64px 1fr; height:100%; }
+    header{
+      grid-column: 1/4; grid-row: 1/2; display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10;
+    }
+    header .brand{ display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.2px; }
+    .pill{ padding:6px 10px; border:1px solid var(--border); background:var(--panel-2); border-radius:999px; color:var(--muted); font-size:12px; }
+
+    aside.left{
+      grid-column:1/2; grid-row:2/3; padding:16px; overflow:auto; background:var(--panel);
+      border-right:1px solid var(--border);
+    }
+    .section{ margin-bottom:22px; }
+    .section h3{ margin:0 0 10px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .card{ background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .radio-list{ display:flex; flex-direction:column; gap:6px; padding:10px; }
+    .radio{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; border:1px solid transparent; }
+    .radio:hover{ background:#202836; }
+    .radio input{ accent-color:var(--accent); }
+
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 12px; background:#1f2735; border:1px solid var(--border); border-radius:10px; color:var(--text); cursor:pointer; text-decoration:none; }
+    .btn:active{ transform: translateY(1px); }
+    .btn.full{ width:100%; justify-content:center; }
+
+    .status{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#12202a; color:#9cd6b4; }
+    .status.bad{ background:#2a1414; color:#ffc3c3; }
+
+    main.center{
+      grid-column:2/3; grid-row:2/3; padding:16px; overflow:hidden; display:flex; flex-direction:column; gap:12px;
+    }
+
+    .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .toolbar .left{ display:flex; align-items:center; gap:8px; }
+
+    .chat-wrapper{ flex:1; min-height:0; }
+    .chat-shell{ height:100%; padding:0; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    #rootHost { height: 100%; }
+    .chat-iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+    aside.right{
+      grid-column:3/4; grid-row:2/3; padding:16px; overflow:auto; background:var(--panel); border-left:1px solid var(--border);
+      display:flex; flex-direction:column; gap:12px;
+    }
+
+    /* Naprawione: tylko sekcja PDF ma stałą wysokość */
+    aside.right > .section.pdf-section { flex: 0 0 auto; }
+
+    .pdf-card{ display:flex; flex-direction:column; border:1px solid var(--border); border-radius:var(--radius); background:var(--panel-2); box-shadow:var(--shadow); overflow:hidden; }
+    .pdf-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px; border-bottom:1px solid var(--border); }
+    .pdf-meta{ display:flex; flex-direction:column; gap:2px; }
+    .pdf-actions{ display:flex; gap:8px; align-items:center; }
+
+    .pdf-zoom{ display:none !important; }
+
+    .pdf-view{ width:100%; aspect-ratio: 1 / 1.4142; position: relative; background: transparent; }
+    #pdfFrame{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; background:transparent; }
+
+    .kv{ display:grid; grid-template-columns: 140px 1fr; gap:8px 10px; padding:12px; }
+    .kv div:nth-child(odd){ color:var(--muted); }
+    .desc{ padding:12px; border-bottom:1px solid var(--border); color:var(--text); }
+    .doc-list{ padding:10px; display:grid; gap:8px; }
+    .doc{ padding:10px; border:1px dashed var(--border); border-radius:10px; display:flex; justify-content:space-between; align-items:center; }
+    .doc a{ color:var(--accent); text-decoration:none; }
+
+    @media (max-width: 1100px){
+      .app{ grid-template-columns: 1fr; grid-template-rows: 64px auto auto auto; }
+      aside.left, main.center, aside.right{ grid-column:1/2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2l9 4-9 4-9-4 9-4zm0 6l9 4-9 4-9-4 9-4zm0 8l9 4-9 4-9-4 9-4z" fill="#6ea8fe"/></svg>
+        Asystent AI – demonstrator
+      </div>
+      <div class="pill">Tryb: LIVE – połączenie z IBM WML</div>
+      <div class="pill" id="agentPill">Agent: —</div>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button class="btn" id="resetCase">Resetuj sprawę</button>
+      </div>
+    </header>
+
+    <!-- LEWA KOLUMNA -->
+    <aside class="left">
+      <div class="section">
+        <h3>Wybierz sprawę</h3>
+        <div class="card radio-list" id="casePicker">
+          <label class="radio"><input type="radio" name="case" value="kradziez" checked> Kradzież telefonu</label>
+          <label class="radio"><input type="radio" name="case" value="zaklocenie"> Zakłócenie miru domowego</label>
+          <label class="radio"><input type="radio" name="case" value="grozby"> Groźby karalne</label>
+          <label class="radio"><input type="radio" name="case" value="uszkodzenie"> Uszkodzenie ciała</label>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="card" style="padding:10px;">
+          <div class="status" id="apiStatus"><span style="width:8px;height:8px;border-radius:50%;background:var(--good);"></span> API OK — Połączono z IBM WML</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Dokumenty sprawy</h3>
+        <div class="card doc-list" id="docList"></div>
+      </div>
+    </aside>
+
+    <!-- ŚRODEK -->
+    <main class="center">
+      <div class="toolbar"><div class="left"><div class="pill">Ostatnia odpowiedź WML (debug)</div></div></div>
+      <div class="chat-wrapper">
+        <div class="chat-shell"><div id="rootHost"></div><noscript>Do działania wymagany jest JavaScript.</noscript></div>
+      </div>
+    </main>
+
+    <!-- PRAWA KOLUMNA -->
+    <aside class="right">
+
+      <!-- Opis sprawy -->
+      <div class="section">
+        <h3>Opis sprawy</h3>
+        <div class="card">
+          <div class="desc" id="caseDescription">—</div>
+          <div class="kv">
+            <div>Sąd:</div><div id="caseCourt">—</div>
+            <div>Data wyroku:</div><div id="caseJudgementDate">—</div>
+            <div>Oskarżony:</div><div id="caseDefendant">—</div>
+            <div>Oskarżyciel prywatny:</div><div id="casePrivateAccuser">—</div>
+            <div>Prokurator:</div><div id="caseProsecutor">—</div>
+            <div>Data i miejsce:</div><div id="casePlaceDate">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Podgląd PDF -->
+      <div class="section pdf-section">
+        <h3>Podgląd dokumentów</h3>
+        <div class="card pdf-card">
+          <div class="pdf-toolbar">
+            <div class="pdf-meta">
+              <div style="color:var(--muted);font-size:12px;">Otwarty plik:</div>
+              <div id="pdfName">—</div>
+            </div>
+            <div class="pdf-actions">
+              <a id="pdfOpenNew" class="btn" href="#" target="_blank">Otwórz</a>
+              <a id="pdfDownload" class="btn" href="#" download>Pobierz</a>
+            </div>
+          </div>
+          <div class="pdf-view"><iframe id="pdfFrame" title="Podgląd PDF"></iframe></div>
+        </div>
+      </div>
+
+      <!-- Szczegóły agenta -->
+      <div class="section">
+        <h3>Szczegóły agenta</h3>
+        <div class="card kv">
+          <div>Aktywny agent:</div><div id="agentName">—</div>
+          <div>Wersja/ID:</div><div id="agentId">—</div>
+          <div>Środowisko:</div><div id="agentEnv">—</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const GREETING_TEXT = "Cześć\nJestem Asystentem AI, jak mogę ci pomóc?";
+    const BASE_ORCH = { orchestrationID:"0781f29958be4f588e177e1250f85e99_4b023360-f35f-4250-992b-cc95d97d4f14", hostURL:"https://eu-de.watson-orchestrate.cloud.ibm.com", crn:"crn:v1:bluemix:public:watsonx-orchestrate:eu-de:a/0781f29958be4f588e177e1250f85e99:4b023360-f35f-4250-992b-cc95d97d4f14::", deploymentPlatform:"ibmcloud" };
+    const agentConfigs = { kradziez:{name:"SedziaAI_18470B",chatOptions:{agentId:"0cedb506-8075-41b6-8099-3a63f821283e",agentEnvironmentId:"4db8c8ab-219a-4aa5-812e-f5453ea3dea9"}}, zaklocenie:{name:"SedziaAI_2_4377WD",chatOptions:{agentId:"45982849-2edc-4d8f-a6a8-c75c67940db8",agentEnvironmentId:"a3d942b8-243b-4be1-9925-718a51a777e5"}}, grozby:{name:"SedziaAI_2_56180h",chatOptions:{agentId:"6bd19daa-7e20-48de-b867-b73ff057e1a4",agentEnvironmentId:"1171b88e-31d5-43f7-ab03-12519b83769d"}}, uszkodzenie:{name:"SedziaAi_4_7889sI",chatOptions:{agentId:"9bf4b724-8f44-436d-8ec2-6bc5f806d03f",agentEnvironmentId:"3f61fdc7-b731-4dc8-8b24-7e76d4800071"}}};
+
+    function reflectAgentUI(key){ const meta=agentConfigs[key]||{}; document.getElementById("agentPill").textContent=`Agent: ${meta.name||"—"}`; document.getElementById("agentName").textContent=meta.name||"—"; document.getElementById("agentId").textContent=meta.chatOptions?.agentId||"—"; document.getElementById("agentEnv").textContent=meta.chatOptions?.agentEnvironmentId||"—"; }
+
+    function createEmptyIframe(){const iframe=document.createElement('iframe');iframe.className='chat-iframe';iframe.src='about:blank';const host=document.getElementById('rootHost');host.innerHTML='';host.appendChild(iframe);const win=iframe.contentWindow;const doc=win.document;doc.open();doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,#wxo-root{height:100%;margin:0;background:transparent}</style></head><body><div id="wxo-root"></div></body></html>');doc.close();return{win,doc};}
+
+    function mountChatInIframe(caseKey){const meta=agentConfigs[caseKey];if(!meta?.chatOptions) return;const {win,doc}=createEmptyIframe();win.wxOConfiguration={...BASE_ORCH,layout:{form:'custom',customElement:null,showOrchestrateHeader:true},chatOptions:meta.chatOptions};win.wxOConfiguration.layout.customElement=doc.getElementById('wxo-root');const s=doc.createElement('script');s.src=`${BASE_ORCH.hostURL}/wxochat/wxoLoader.js?embed=true`;s.onload=function(){if(win.wxoLoader?.init){win.wxoLoader.init();setTimeout(()=>{win.wxoLoader.chat?.sendUserMessage?.(GREETING_TEXT)},500);}};doc.head.appendChild(s);}
+
+    const CASE_BASE_PATHS={grozby:'/docs/sprawa-grozby-karalne/',kradziez:'/docs/sprawa-kradziez-telefonu/',uszkodzenie:'/docs/sprawa-uszkodzenie-ciala/',zaklocenie:'/docs/sprawa-zaklocenie-miru/'};
+    const CASE_DOCS={kradziez:[{key:'akt_oskarzenia_kradziez.pdf',label:'Akt oskarżenia'},{key:'faktura_zakupu_telefonu.pdf',label:'Faktura zakupu telefonu'},{key:'notatka_policyjna.pdf',label:'Notatka policyjna'},{key:'opinia_bieglego_kradziez.pdf',label:'Opinia biegłego'},{key:'opinia_bieglego_wycena_telefonu.pdf',label:'Opinia biegłego (wycena telefonu)'},{key:'postanowienie_dopuszczenie_dowodu.pdf',label:'Postanowienie – dopuszczenie dowodu'},{key:'postanowienie_dozor.pdf',label:'Postanowienie o dozorze'},{key:'protokol_rozprawy_kradziez (1).pdf',label:'Protokół rozprawy'},{key:'wyrok_pelny_kradziez.pdf',label:'Wyrok'}], grozby:[{key:'akt_oskarzenia_grozby_karalne.pdf',label:'Akt oskarżenia'},{key:'opinia_bieglego_grozby.pdf',label:'Opinia biegłego'},{key:'postanowienie_zakaz_kontaktu.pdf',label:'Postanowienie – zakaz kontaktu'},{key:'protokol_grozby_karalne.pdf',label:'Protokół sprawy'},{key:'wydruk_sms_grozby_z_metadanymi.pdf',label:'Wydruk SMS z metadanymi'},{key:'wyrok_grozba.pdf',label:'Wyrok'}], uszkodzenie:[{key:'akt_oskarzenia_uszkodzenie_ciala.pdf',label:'Akt oskarżenia'},{key:'opinia_bieglego_uszkodzenie_ciala.pdf',label:'Opinia biegłego'},{key:'postanowienie_dopuszczenie_lekarz.pdf',label:'Postanowienie – dopuszczenie lekarza'},{key:'protokol_uszkodzenie_ciala.pdf',label:'Protokół sprawy'},{key:'wyrok_pelny_uszkodzenie.pdf',label:'Wyrok'}], zaklocenie:[{key:'akt_oskarzenia.pdf',label:'Akt oskarżenia'},{key:'notatka_policyjna_mir.pdf',label:'Notatka policyjna'},{key:'opinia_bieglego.pdf',label:'Opinia biegłego'},{key:'opinia_bieglego_poprawiona.pdf',label:'Opinia biegłego (poprawiona)'},{key:'pismo_doreczenie_zarzutu.pdf',label:'Pismo – doręczenie zarzutu'},{key:'postanowienie_dopuszczenie.pdf',label:'Postanowienie – dopuszczenie'},{key:'postanowienie_dopuszczenie_dodatkowe.pdf',label:'Postanowienie – dopuszczenie dodatkowe'},{key:'postanowienie_otwarcie_przewodu.pdf',label:'Postanowienie o otwarciu przewodu'},{key:'protokol_sprawy.pdf',label:'Protokół sprawy'},{key:'protokol_uzupelniajacy.pdf',label:'Protokół uzupełniający'},{key:'wyrok.pdf',label:'Wyrok'}]};
+
+    const CASE_INFO={kradziez:{description:"Sprawa dotyczy kradzieży (art. 278 § 1 k.k.). Piotr Malinowski w dniu 5 lutego 2023 r. w Warszawie, w sklepie TechMarket przy ul. Puławskiej 45, zabrał w celu przywłaszczenia telefon komórkowy marki Samsung Galaxy A52 o wartości 1 200 zł należący do Anny Nowickiej.",court:"Sąd Rejonowy dla m.st. Warszawy, Wydział II Karny",judgementDate:"20 maja 2023 r.",defendant:"Piotr Malinowski, ur. 1994 r., zam. Warszawa, ul. Ogrodowa 12/3",privateAccuser:"Anna Nowicka, zam. Warszawa, ul. Słoneczna 15/7",prosecutor:"Prok. Michał Zieliński",placeDate:"5 lutego 2023 r., Warszawa, sklep TechMarket przy ul. Puławskiej 45"}, grozby:{description:"Sprawa dotyczy groźby karalnej (art. 190 § 1 k.k.). Paweł Adamski w dniu 2 marca 2023 r. w Krakowie, przy ul. Lipowej, groził Joannie Mazur pozbawieniem życia, wzbudzając u niej uzasadnioną obawę spełnienia groźby. Groźby miały charakter powtarzający się – zostały wypowiedziane zarówno ustnie, jak i w wiadomościach SMS.",court:"Sąd Rejonowy w Krakowie, Wydział II Karny",judgementDate:"30 czerwca 2023 r.",defendant:"Paweł Adamski, ur. 1988 r., zam. Kraków, ul. Karmelicka 11/5",privateAccuser:"Joanna Mazur, zam. Kraków, ul. Lipowa 12/9",prosecutor:"Prok. Michał Zieliński",placeDate:"2 marca 2023 r., Kraków, ul. Lipowa"}, uszkodzenie:{description:"Sprawa dotyczy lekkiego uszkodzenia ciała (art. 157 § 2 k.k.). Tomasz Lewandowski w dniu 20 stycznia 2023 r. w Warszawie na ul. Kruczej uderzył Marka Zielińskiego pięścią w twarz, powodując obrażenia w postaci krwiaka i stłuczenia wargi, które naruszyły czynności ciała na okres poniżej 7 dni.",court:"Sąd Rejonowy dla m.st. Warszawy, Wydział II Karny",judgementDate:"25 czerwca 2023 r.",defendant:"Tomasz Lewandowski, ur. 1990 r., zam. Warszawa, ul. Polna 7/2",privateAccuser:"Marek Zieliński, zam. Warszawa, ul. Leśna 22/4",prosecutor:"Prok. Michał Zieliński",placeDate:"20 stycznia 2023 r., Warszawa, ul. Krucza"}, zaklocenie:{description:"Sprawa dotyczy naruszenia miru domowego (art. 193 k.k.). Krzysztof Piotrowski w dniu 10 marca 2023 r. w Poznaniu wtargnął do mieszkania Ewy Kwiatkowskiej przy ul. Różanej 6/3 i pomimo wyraźnego wezwania nie opuścił lokalu, stwarzając poczucie zagrożenia.",court:"Sąd Rejonowy w Poznaniu, Wydział II Karny",judgementDate:"25 lipca 2023 r.",defendant:"Krzysztof Piotrowski, ur. 1985 r., zam. Poznań, ul. Lecha 20/7",privateAccuser:"Ewa Kwiatkowska, zam. Poznań, ul. Różana 6/3",prosecutor:"Prok. Michał Zieliński",placeDate:"10 marca 2023 r., Poznań, ul. Różana 6/3"}};
+
+    function renderCaseSummary(){const key=currentCaseKey();const info=CASE_INFO[key]||{};const get=(v)=>v&&String(v).trim().length?v:"—";document.getElementById("caseDescription").textContent=get(info.description);document.getElementById("caseCourt").textContent=get(info.court);document.getElementById("caseJudgementDate").textContent=get(info.judgementDate);document.getElementById("caseDefendant").textContent=get(info.defendant);document.getElementById("casePrivateAccuser").textContent=get(info.privateAccuser);document.getElementById("caseProsecutor").textContent=get(info.prosecutor);document.getElementById("casePlaceDate").textContent=get(info.placeDate);}
+
+    function currentCaseKey(){return document.querySelector('input[name="case"]:checked')?.value||'kradziez';}
+    function renderDocList(){const container=document.getElementById('docList');container.innerHTML='';(CASE_DOCS[currentCaseKey()]||[]).forEach(doc=>{const row=document.createElement('div');row.className='doc';row.innerHTML=`<span>${doc.label}</span><a href="#" data-file="${doc.key}">Otwórz</a>`;container.appendChild(row);});}
+    function buildDocUrl(fileName){return (CASE_BASE_PATHS[currentCaseKey()]||'/docs/')+fileName;}
+    function openPDF(fileName,remember=true){const src=buildDocUrl(fileName);const frame=document.getElementById('pdfFrame');document.getElementById('pdfName').textContent=fileName;document.getElementById('pdfOpenNew').href=src;document.getElementById('pdfDownload').href=src;frame.src=`${src}#toolbar=0&view=FitH&zoom=page-width`;if(remember) window.__lastDocFile=fileName;}
+
+    let currentCase=null,switching=false;
+    function switchCase(caseKey){if(switching||caseKey===currentCase)return;switching=true;reflectAgentUI(caseKey);mountChatInIframe(caseKey);currentCase=caseKey;renderCaseSummary();if(window.__lastDocFile)openPDF(window.__lastDocFile,false);switching=false;}
+
+    document.addEventListener('DOMContentLoaded',()=>{switchCase(currentCaseKey());renderDocList();renderCaseSummary();document.getElementById('casePicker').addEventListener('change',()=>{switchCase(currentCaseKey());renderDocList();renderCaseSummary();if(window.__lastDocFile)openPDF(window.__lastDocFile,false);else{document.getElementById('pdfFrame').removeAttribute('src');document.getElementById('pdfName').textContent='—';}});document.getElementById('resetCase').addEventListener('click',()=>{document.querySelector('input[value="kradziez"]').checked=true;switchCase('kradziez');renderDocList();renderCaseSummary();document.getElementById('pdfFrame').removeAttribute('src');document.getElementById('pdfName').textContent='—';window.__lastDocFile=null;});document.getElementById('docList').addEventListener('click',e=>{if(e.target.tagName==='A'){e.preventDefault();openPDF(e.target.dataset.file);}});const firstDoc=(CASE_DOCS[currentCaseKey()]||[])[0];if(firstDoc)openPDF(firstDoc.key);});
+  </script>
+</body>
+</html>
